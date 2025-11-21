@@ -21,6 +21,7 @@ services:
     restart: unless-stopped
     networks:
       - searxng
+      - proxy
     ports:
       - "0.0.0.0:8999:8080"  # Ваш порт 8999
     volumes:
@@ -34,6 +35,7 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+    
 
   tavily-adapter:
     build: ./simple_tavily_adapter
@@ -41,6 +43,7 @@ services:
     restart: unless-stopped
     networks:
       - searxng
+      - proxy
     ports:
       - "8000:8000"
     volumes:
@@ -57,9 +60,19 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.search.entrypoints=websecure"
+      - "traefik.http.routers.search.rule=Host(`s.aproject.com`)"
+      - "traefik.http.routers.search.tls=true"
+      - "traefik.http.routers.search.tls.certresolver=letsencrypt"
+      - "traefik.http.services.search.loadbalancer.server.port=8000"
+      - "traefik.docker.network=proxy"
 
 networks:
   searxng:
+  proxy:
+    external: true
 
 volumes:
   valkey-data2:
